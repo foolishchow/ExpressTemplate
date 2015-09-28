@@ -8,6 +8,7 @@ var app = require('../app');
 var debug = require('debug')('Sockets:server');
 var http = require('http');
 
+global.database = require('../config/dataBase');
 
 /**
  * Get port from environment and store in Express.

@@ -104,9 +104,6 @@ var config = function(app,express){
 	configStatic(app,express);
 	configController(app,express);
 	configDefault(app,express);
-	
-
-	
 
 	//项目端口
 	process.env.PORT="8080";
