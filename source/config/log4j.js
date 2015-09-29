@@ -5,7 +5,7 @@ var path = require('path');
 var appenders = function(props){
   var appender = props.appenders;
   for( var i = 0 ; i < appender.length ; i++ ){
-    var  append = appender[i];
+    var append = appender[i];
     if( append.filename && append.RelativePath ){
       append.filename = path.join(__dirname, append.filename );
       delete append.RelativePath;
@@ -22,9 +22,9 @@ log4js.configure({
 });
 
 var logger = log4js.getLogger('normal');
-logger.setLevel('INFO');
+logger.setLevel('all');
   
-
+global.logger = logger;
 module.exports = function(app){
   app.use(log4js.connectLogger(logger, {level:log4js.levels.INFO}));
 

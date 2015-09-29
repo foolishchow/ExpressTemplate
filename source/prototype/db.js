@@ -1,9 +1,10 @@
 module.exports = {
     mysql_dev: {
         host: 'localhost',
-        user: 'dbu user',
-        password: 'your password',
-        database: 'your db name',
+        port: '3306',
+        user: 'root',
+        password: '123456',
+        database: 'test',
         connectionLimit: 10,
         supportBigNumbers: true
     }
