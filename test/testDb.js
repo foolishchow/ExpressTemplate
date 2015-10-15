@@ -5,8 +5,8 @@ var baseDao = require('../main/dao/baseDao/baseDao.js');
 
 var sql = "select * from td_m_resource where id =?";
 var array = ['1'];
-var array1 = ['4','4','4'];
-var array2 = ['4','5','5'];
+var array1 = ['6','4','4'];
+var array2 = ['6','5','5'];
 var sql1 = "insert into td_m_resource(id,name,token)  values(?,?,?)";
 
 try{
@@ -22,8 +22,8 @@ try{
 			console.info("002");
 			console.info(result);
 		}).excute();
-
+	//throw new Error("13");
 }catch(e){
-	logger.info("---------------catch");
-	logger.info(e);
+	console.info("---------------catch");
+	console.info(e);
 }
