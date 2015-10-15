@@ -1,4 +1,6 @@
 var helper = require('../../util/Helper');
+var eventEmitter = require("events").EventEmitter;
+var util = require("util");;
 
 helper.Thenjs.onerror = function(err){
     console.info("err:"+  err  );
@@ -14,9 +16,10 @@ var baseDao = function(transactions){
     this.transactions = ( !transactions ) ? false : true ;
     logger.info('Transaction . . . . . . ' + this.transactions);
 }
-baseDao.onerror = function(err){
-    throw err;
-}
+
+util.inherits(baseDao, events.EventEmitter);
+
+
 var prop = baseDao.prototype;
 /*异步接口*/
 prop.then = function(func){
@@ -24,6 +27,11 @@ prop.then = function(func){
         func.apply(this,arguments);
     });
     return this;
+}
+baseDao.onerror = function(err){
+   // throw err;
+   this.emit("error", err);
+   //在此触发名为"err"事件 
 }
 prop.err = function(err){
     if( err ){
