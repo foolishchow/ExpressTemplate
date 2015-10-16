@@ -2,14 +2,6 @@ var helper = require('../../util/Helper');
 var eventEmitter = require("events").EventEmitter;
 var util = require("util");;
 
-helper.Thenjs.onerror = function(err){
-    console.info("err:"+  err  );
-    console.info(  err  );
-    //baseDao.onerror(err);
-}
-
-// var util = require('util');
-// var em = require('event').EventEmitter;  
 var baseDao = function(transactions){
     this.connection = {};
     this.prepared = false;
@@ -17,10 +9,10 @@ var baseDao = function(transactions){
     logger.info('Transaction . . . . . . ' + this.transactions);
 }
 
-util.inherits(baseDao, events.EventEmitter);
-
+util.inherits(baseDao, eventEmitter);
 
 var prop = baseDao.prototype;
+
 /*异步接口*/
 prop.then = function(func){
     this.thenobj = this.thenobj.then(function(cont){
@@ -28,13 +20,10 @@ prop.then = function(func){
     });
     return this;
 }
-baseDao.onerror = function(err){
-   // throw err;
-   this.emit("error", err);
-   //在此触发名为"err"事件 
-}
+
 prop.err = function(err){
     if( err ){
+        this.emit('error',err);
         this.__error = err;
         throw err;
     }
@@ -61,7 +50,7 @@ prop.prepare = function(){
                 cont(null,err); 
             });
         }).then(function(cont,err){
-            logger.info('beginTransaction successed. . . . . . ');
+            logger.info('beginTransaction successed ...... ');
             me.err(err); 
             cont(null);
         });
@@ -81,6 +70,11 @@ prop.addQuery = function(sql,array,func){
             cont(null,err,results);
         });
     }).then(function(cont, err, results){
+        if( err ) {
+            logger.info(err);
+            logger.info("error in query sql : " + sql);
+            logger.info("param : " + JSON.stringify(array) );
+        }
         me.err(err);
         func(results);
         cont(null);
@@ -88,66 +82,54 @@ prop.addQuery = function(sql,array,func){
 
     return this;
 };
-prop.excute = function(){
+prop.excute = function(func){
     var me = this;
-
+    if( func && typeof func == "FUNCTION") me.on('success',function(){ func.apply(this,arguments);})
     //commit the whole transaction
     if( me.transactions ) {
         me.then(function(cont){
             logger.info("commit transaction");
             me.connection.commit(function(err) {
-                cont(null,err)
+                cont( null,err );
             });
         }).then(function(cont,err){
-            if (err)  logger.info('error in transaction commit');
+            if ( err ) logger.info('error in transaction commit');
             me.err(err);  
+            logger.info('commit transaction successed ...... ');
             cont(null);
         });
     } 
 
     me.thenobj = me.thenobj.fail(function(error){
-        error.__error = me.__error;
         throw error;
     });
 
     me.thenobj = me.thenobj.fin(function(cont,err){
-
-        if( me.__error && me.transactions ) {
-            logger.info("error , so transaction rollback");
-            me.connection.rollback(function(err) {
-                me.err(err); 
-                cont(null,err);
-            });
-            
+        if( me.__error && me.transactions ){
+                logger.info("error , so transaction rollback");
+                me.connection.rollback(function(err) {
+                    me.err(err); 
+                    me.release();
+                });
         } else{
-            logger.info('finally release connection!');
-            me.connection.release();
-            logger.info('finally released connection!');
+            me.emit('success',me);
+            me.release();
         }
 
-       
-        
     });
-
-    me.then(function(cont){
-        try{
-            logger.info(" Try to release connection ... ");
-            me.connection.release();
-        }catch(e){
-            logger.info(" Connection already released ... ");
-        }
-        logger.info(" Connection released ... ");
-        me.released = true;
-        throw me.__error;
-    });
-
+    
     return this;
 }
 
-
-
-
-
+prop.release = function(){
+    try{
+        logger.info(" Try to release connection ... ");
+        me.connection.release();
+    }catch(e){
+        logger.info(" Connection already released ... ");
+    }
+    logger.info(" Connection released ... ");
+}
 
 
 module.exports = function(transactions){
@@ -155,23 +137,10 @@ module.exports = function(transactions){
 };;
 
 
-prop.t = prop.transition;
-var prepareStatement = function(){
-    this.thenjs = helper.Thenjs(function(cont){
-        global.database.pool.getConnection(function(err, connection) {
-            if (err) {
-                callback(true,null,err);
-                return;
-            }
-            cont(null,connection);
-        });
-    }); 
-    return this; 
-};
 
 var query = function(sql){
     if(sql) sql = 'select * from #{tabel_name} where id = #{id}';
-    var regexp = new RegExp('\#\{.*?\}/g');
+    var regexp = new RegExp(/\#\{.*?\}/g);
     var test = regexp.test(sql);
     if(test){
         
